@@ -1,4 +1,4 @@
-name: Build LaTeX on EC2
+name: Build LaTeX on EC2 and Get PDF
 
 on:
   push:
@@ -32,3 +32,18 @@ jobs:
             export PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH
             cd ~/latex_build
             pdflatex main.tex
+
+      - name: Copy PDF back from EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "/home/ec2-user/latex_build/main.pdf"
+          target: "./"
+
+      - name: Upload PDF to GitHub as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-pdf
+          path: main.pdf
