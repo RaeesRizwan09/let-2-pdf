@@ -33,6 +33,15 @@ jobs:
             cd ~/latex_build
             pdflatex main.tex
 
+      - name: List files on EC2 (debug)
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            ls -lh /home/ec2-user/latex_build
+      
       - name: Download PDF from EC2
         uses: appleboy/scp-action@v0.1.4
         with:
