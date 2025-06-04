@@ -1,4 +1,4 @@
-name: Build LaTeX on EC2
+name: LaTeX to PDF via EC2
 
 on:
   push:
@@ -6,14 +6,14 @@ on:
       - '**.tex'
 
 jobs:
-  compile:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout LaTeX source
-        uses: actions/checkout@v3
+      - name: Checkout LaTeX
+        uses: actions/checkout@v4
 
-      - name: Copy .tex to EC2
+      - name: Copy LaTeX to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -32,3 +32,19 @@ jobs:
             export PATH=/usr/local/texlive/2025/bin/x86_64-linux:$PATH
             cd ~/latex_build
             pdflatex main.tex
+
+      - name: Download PDF from EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "/home/ec2-user/latex_build/main.pdf"
+          target: "./"
+          debug: true
+
+      - name: Upload PDF to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdf
+          path: main.pdf
