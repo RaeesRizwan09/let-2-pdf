@@ -43,7 +43,8 @@ jobs:
           target: "./"
 
       - name: Upload PDF to GitHub as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: compiled-pdf
           path: main.pdf
+
