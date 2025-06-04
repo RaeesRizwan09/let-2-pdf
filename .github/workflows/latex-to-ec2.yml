@@ -48,7 +48,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "/home/ec2-user/latex_build/main.pdf"
+          source: "latex_build/main.pdf"
           target: "./"
           debug: true
 
