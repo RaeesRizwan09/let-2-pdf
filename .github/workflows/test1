@@ -1,0 +1,30 @@
+name: Download PDF from EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      filename:
+        description: 'Name of the PDF file to download from EC2 (e.g., main.pdf)'
+        required: true
+        default: 'main.pdf'
+
+jobs:
+  download-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download PDF from EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
+          target: "./"
+          debug: true
+
+      - name: Upload PDF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloaded-pdf
+          path: ${{ github.event.inputs.filename }}
