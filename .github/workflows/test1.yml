@@ -31,16 +31,17 @@ jobs:
             fi
 
       - name: SCP download
-        uses: appleboy/scp-action@v0.1.4 # Keep your current version
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
-          target: "./" # Downloads to the root of the runner's workspace
-          tar_exec: "" # Keep this, disables custom tar exec
-          strip_components: 0 # Keep this, only relevant for directories
-          debug: true # Crucial for debugging
+          target: "./"
+          # Find the full path to tar on your EC2 instance (e.g., /usr/bin/tar)
+          tar_exec: "/usr/bin/tar" # <--- ADD THIS LINE with the correct path
+          strip_components: 0
+          debug: true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
