@@ -41,6 +41,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             ls -lh /home/ec2-user/latex_build
+            
+      - name: Move PDF to /tmp
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cp /home/ec2-user/latex_build/main.pdf /tmp/main.pdf
+      
       
       - name: Download PDF from EC2
         uses: appleboy/scp-action@v0.1.4
@@ -48,7 +58,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "latex_build/main.pdf"
+          source: "/tmp/main.pdf"
           target: "./"
           debug: true
 
