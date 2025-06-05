@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download PDF via SCP
+      - name: SCP download
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
           target: "./"
+          tar_exec: ""
           strip_components: 0
           debug: true
 
