@@ -13,20 +13,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Good practice for most workflows
+
+      - name: Verify file on EC2 (Optional - helps debug "file not found" errors)
+        uses: appleboy/ssh-action@v1.0.0 # Using ssh-action for running commands
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Checking for file: /home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
+            ls -l "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
+            if [ ! -f "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}" ]; then
+              echo "Error: PDF file '${{ github.event.inputs.filename }}' not found at /home/ec2-user/latex_build/ on EC2. Please ensure it exists and ec2-user has read permissions."
+              exit 1
+            fi
+
       - name: SCP download
-        uses: appleboy/scp-action@v0.1.4
+        uses: appleboy/scp-action@v0.1.4 # Keep your current version
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
-          target: "./"
-          tar_exec: ""
-          strip_components: 0
-          debug: true
+          target: "./" # Downloads to the root of the runner's workspace
+          tar_exec: "" # Keep this, disables custom tar exec
+          strip_components: 0 # Keep this, only relevant for directories
+          debug: true # Crucial for debugging
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-pdf
-          path: ${{ github.event.inputs.filename }}
+          path: ${{ github.event.inputs.filename }} # Path relative to runner's workspace
