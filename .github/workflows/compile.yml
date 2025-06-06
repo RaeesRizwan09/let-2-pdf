@@ -1,0 +1,35 @@
+name: Compile LaTeX via EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      tex_filename:
+        description: 'Name of the .tex file to compile'
+        required: true
+        default: 'main.tex'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Upload .tex to EC2
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+        chmod 600 ec2_key.pem
+        scp -i ec2_key.pem "${{ github.event.inputs.tex_filename }}" ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/
+
+    - name: Trigger LaTeX compilation on EC2
+      run: |
+        FILENAME="${{ github.event.inputs.tex_filename }}"
+        curl -F "file=@$FILENAME" http://${{ secrets.EC2_HOST }}:3000/compile --output "${FILENAME%.tex}.pdf"
+
+    - name: Upload compiled PDF
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-pdf
+        path: ${{ github.event.inputs.tex_filename }}.pdf
+        
