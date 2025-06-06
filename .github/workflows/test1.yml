@@ -1,38 +1,38 @@
 name: Download File from EC2
 
 on:
-  # Allows you to manually trigger the workflow from the GitHub Actions UI
   workflow_dispatch:
     inputs:
       filename:
-        description: 'File to download from EC2 (e.g., my_report.pdf, /var/log/app.log)'
+        description: 'File to download from EC2 (e.g., main.pdf)'
         required: true
-        default: 'my_file.txt' # Provide a sensible default
+        default: 'main.pdf' # Provide a sensible default, assuming a common PDF name
 
 jobs:
   download_file:
-    runs-on: ubuntu-latest # Or your preferred runner
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Good practice to have your repo code available
+        uses: actions/checkout@v4
 
       - name: Debug - List EC2 host and username (for verification, remove in production)
         run: |
           echo "Connecting to host: ${{ secrets.EC2_HOST }}"
           echo "Using username: ${{ secrets.EC2_USERNAME }}"
-          echo "Attempting to download file: /path/on/ec2/${{ github.event.inputs.filename }}"
+          echo "Attempting to download file: /home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
 
       # (Optional) Add a step to verify file existence on EC2 before SCPing
       # This can help diagnose "No such file or directory" errors quickly
       - name: Verify file existence on EC2
-        uses: appleboy/ssh-action@v1.0.0 # Use ssh-action for running commands
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            REMOTE_FILE_PATH="/home/${{ secrets.EC2_USERNAME }}/downloads/${{ github.event.inputs.filename }}" # Adjust this to your actual remote path
+            # --- UPDATED PATH HERE ---
+            REMOTE_FILE_PATH="/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
             echo "Checking if file exists on EC2: $REMOTE_FILE_PATH"
             if [ -f "$REMOTE_FILE_PATH" ]; then
               echo "File found. Permissions: $(ls -l "$REMOTE_FILE_PATH" | awk '{print $1}')"
@@ -42,28 +42,26 @@ jobs:
             fi
 
       - name: SCP Download File from EC2
-        uses: appleboy/scp-action@v0.1.4 # A popular and reliable action for SCP
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # The source path on your EC2 instance. IMPORTANT: Adjust this path!
-          source: "/home/${{ secrets.EC2_USERNAME }}/downloads/${{ github.event.inputs.filename }}"
-          # The target path on the GitHub Actions runner. "./" means current working directory.
+          # --- UPDATED PATH HERE ---
+          source: "/home/ec2-user/latex_build/${{ github.event.inputs.filename }}"
           target: "./"
-          # Optional: If you face 'tar' errors, you might need to specify the tar executable path on EC2
-          # tar_exec: "/usr/bin/tar"
-          # debug: true # Uncomment for more verbose logging if troubleshooting
+          # tar_exec: "/usr/bin/tar" # Uncomment if you had issues with tar
+          # debug: true
 
       - name: List downloaded files (for verification)
-        run: ls -la # See what was downloaded to the runner's workspace
+        run: ls -la
 
       - name: Upload downloaded file as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: downloaded-from-ec2 # Name of the artifact
-          path: ${{ github.event.inputs.filename }} # Path to the downloaded file on the runner
-          retention-days: 5 # How long to keep the artifact (optional)
+          name: downloaded-from-ec2
+          path: ${{ github.event.inputs.filename }}
+          retention-days: 5
 
       - name: Success Message
         run: echo "File ${{ github.event.inputs.filename }} successfully downloaded and uploaded as artifact!"
